@@ -12,6 +12,7 @@ import {
   signInSuccess,
 } from "./redux/features/auth/authSlice";
 import AuthLayout from "./layouts/AuthLayout";
+import client from "./utils/client";
 
 const router = createBrowserRouter([
   {
@@ -40,30 +41,27 @@ function App() {
   const dispatch = useDispatch();
   useEffect(() => {
     (async () => {
-      dispatch(signInStart());
-      const response = await fetch("http://localhost:3000/api/users/me", {
-        credentials: "include",
-      });
-      const data = await response.json();
-      if (data.error || !response.ok) {
-        console.error(data.error);
-        dispatch(
-          signInFailure(data.error || "An error occurred. Please try again.")
-        );
-        router.navigate("/login");
-      } else {
+      try {
+        dispatch(signInStart());
+        const response = await client.get("/users/me");
         dispatch(
           signInSuccess({
             user: {
-              id: data.id,
-              email: data.email,
-              role: data.role,
-              name: data.name,
+              id: response.data.id,
+              email: response.data.email,
+              role: response.data.role,
+              name: response.data.name,
             },
             loading: false,
             error: null,
           })
         );
+      } catch (error: any) {
+        console.error(error);
+        dispatch(
+          signInFailure(error.message || "An error occurred. Please try again.")
+        );
+        router.navigate("/login");
       }
     })();
   }, []);

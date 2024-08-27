@@ -5,6 +5,7 @@ import {
   signInSuccess,
 } from "../redux/features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
+import client from "../utils/client";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -14,35 +15,30 @@ export default function Login() {
     const email = (e.target as HTMLFormElement).email.value;
     const password = (e.target as HTMLFormElement).password.value;
     dispatch(signInStart());
-    const response = await fetch("http://localhost:3000/api/users/signin", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    if (data.error) {
-      dispatch(
-        signInFailure(
-          data.error || "Invalid email or password. Please try again."
-        )
-      );
-    } else {
+
+    try {
+      const response = await client.post("/users/signin", {
+        email,
+        password,
+      });
       dispatch(
         signInSuccess({
           user: {
-            id: data.id,
-            email: data.email,
-            role: data.role,
-            name: data.name,
+            id: response.data.id,
+            email: response.data.email,
+            role: response.data.role,
+            name: response.data.name,
           },
           loading: false,
           error: null,
         })
       );
       navigate("/dashboard");
+    } catch (error: any) {
+      console.error(error);
+      dispatch(
+        signInFailure(error.message || "An error occurred. Please try again.")
+      );
     }
   };
   return (

@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "../redux/features/auth/authSlice";
+import client from "../utils/client";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -10,17 +11,12 @@ export default function Home() {
 
   async function handleLogout() {
     // Add logout functionality here
-    const response = await fetch("http://localhost:3000/api/users/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    const data = await response.json();
-    console.log(data);
-
-    if (data.message) {
+    try {
+      await client.post("/users/logout");
       dispatch(signOut());
       navigate("/login");
+    } catch (error) {
+      console.error(error);
     }
   }
   return (
